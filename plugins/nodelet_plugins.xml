@@ -1,0 +1,7 @@
+<library path="lib/liblaneloc">
+  <class name="laneloc/laneloc_nodeletclass" type="laneloc::laneloc_nodeletclass" base_class_type="nodelet::Nodelet">
+  <description>
+      This is a nodelet which is used to get the lane to localization by robot.
+  </description>
+  </class>
+</library>	
