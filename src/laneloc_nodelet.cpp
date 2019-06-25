@@ -31,102 +31,32 @@ namespace laneloc
     void laneloc_nodeletclass::Process()  
     {  
 
-		LaneLoc l; 
-        l.lanel(src1,pub);								
-        
-
-
-
-        /***
-		double PI = 3.1415926535;
 		list<vector<double> > history_l1;
 		list<vector<double> > history_l2;
 		list<double> history_theta1;
 		list<double> history_theta2;
 
-		Mat gray_src, dst,imgHSV, pic, imgThresholded;
+		LaneLoc l; 
 
         while(1)
         {
-            if(src1.empty()){
-                continue;
-            }
-            else{
-                ImageSeg imageseg;
-                LineProcess lineprocess;
-
-				double secs =ros::Time::now().toSec();
-				int secs1 = (int)secs;
-
-				stringstream ss;
-				ss<<secs1;
-				string s1 = ss.str();
-
-				cv::imshow("view", src1);
-				cvtColor(src1, imgHSV, COLOR_BGR2HSV);//转为HSV
-		 
-                cout<< "channels"<<endl;
-				vector<Mat> channels;
-				cv::split(imgHSV, channels);
-
-				Mat img_H = channels.at(0);
-				Mat img_S = channels.at(1);
-				Mat img_V = channels.at(2);
-
-                cout<< "lines"<<endl;
-				vector<Vec4f> lines;
-
-				double mean_x_start1=0, mean_y_start1=0, mean_x_end1=0, mean_y_end1=0;
-				double mean_x_start2=0, mean_y_start2=0, mean_x_end2=0, mean_y_end2=0;
-				double num_pic = 5;
-
-				cout<< "history_l1.size(): " << history_l1.size() <<endl;
-				cout<< "history_l2.size(): " << history_l2.size() <<endl;
-
-				Mat imgTh(480,640,CV_8UC1,Scalar(0));
-
-				if(history_l1.size()>num_pic){
-                    imageseg.Process_right_image(history_l1,  mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic, 
-                                                    img_S, img_V, img_H, imgTh, imgThresholded, dst, lines);
-				}
-
-				else if(history_l2.size() > num_pic){
-                    imageseg.Process_left_image(history_l2,  mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic, 
-                                                    img_S, img_V, img_H, imgTh, imgThresholded, dst, lines);
-				}
-
-				else{
-                    imageseg.initialize(imgHSV, imgThresholded, dst, imgTh, lines);
-				}
-
-
-				if(lines.size() > 0){
-
-                    lineprocess.Process_all_imageline(lines, imgThresholded, dst, history_theta1, history_theta2, num_pic, pub, 
-                                                      PI, history_l1, history_l2);
-				} 
-				imshow("output_line_pic", dst);
-		    }
-        waitKey(10);
+        	l.laneloc(src1, pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);	
+        	waitKey(10);
         }
-        ***/
     }
 
 
-	  void laneloc_nodeletclass::imageCallback(const sensor_msgs::ImageConstPtr& msg)
-	  {
-	   	   //sensor_msgs::ImageConstPtr是ROS中image传递的消息形式
-		   try{ 
+	void laneloc_nodeletclass::imageCallback(const sensor_msgs::ImageConstPtr& msg)
+	{
+		//sensor_msgs::ImageConstPtr是ROS中image传递的消息形式
+		try{ 
 
-		       src1 = cv_bridge::toCvShare(msg, "bgr8")->image;
-				imshow("src1s",src1);
-           		waitKey(35);
-
-		   }
-           catch (cv_bridge::Exception& e){
-                 ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str()); 
-		   }
-	  }
+			src1 = cv_bridge::toCvShare(msg, "bgr8")->image;
+		}
+		catch (cv_bridge::Exception& e){
+			ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str()); 
+		}
+	}
 
 
    void laneloc_nodeletclass::onInit()
@@ -134,6 +64,8 @@ namespace laneloc
 
         image_transport::ImageTransport it(nh);  
 		pub = nh.advertise<laneloc::encode>("/theta_l", 1000);
+		marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+
 
 		sub = it.subscribe("/camera/color/image_raw", 1, &laneloc_nodeletclass::imageCallback,this);
 		cout<<"dingyue"<<endl;

@@ -18,23 +18,17 @@ using namespace cv;
 
 namespace laneloc
 {			
-    void LaneLoc::lanel(Mat src1,ros::Publisher pub){
-		double PI = 3.1415926535;;
-		list<vector<double> > history_l1;
-		list<vector<double> > history_l2;
-		list<double> history_theta1;
-		list<double> history_theta2;
+    void LaneLoc::laneloc(Mat src1,ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, 
+			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2){
 
-		Mat gray_src, dst,imgHSV, pic, imgThresholded;
 
-        while(1)
-        {
+			double PI = 3.1415926535;
+			Mat gray_src, dst,imgHSV, pic, imgThresholded;
+
             if(src1.empty()){
-                cout<< "1111111111"<<endl;
-                continue;
+                cout<< "src1 is empty!"<<endl;
             }
             else{
-                cout<< "2222222222"<<endl;
 
 				double secs =ros::Time::now().toSec();
 				int secs1 = (int)secs;
@@ -89,12 +83,11 @@ namespace laneloc
 				if(lines.size() > 0){
 
                     lineprocess.Process_all_imageline(lines, imgThresholded, dst, history_theta1, 
-					history_theta2, num_pic, pub,PI, history_l1, history_l2);
+					history_theta2, num_pic, pub, marker_pub, PI, history_l1, history_l2);
 				} 
 				imshow("output_line_pic", dst);
 		    }
-        waitKey(10);
-        }
+
   	}
 
 

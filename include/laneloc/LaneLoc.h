@@ -10,16 +10,13 @@ using namespace cv;
 
 namespace laneloc
 {
-    //class ImageSeg;
-    //class LineProcess;
+
     class LaneLoc 
     {
         public:
-			void lanel(Mat src1, ros::Publisher pub);
-
-
-
-            
+    		void laneloc(Mat src1,ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, list<vector<double> > &history_l2,
+                    list<double> &history_theta1, list<double> &history_theta2);
+           
     };
 }
 

@@ -15,7 +15,7 @@ namespace laneloc
 
 
     		void get_theta_l(Mat &dst, vector< vector<double> > line_ifo, int best_line, double result[], double PI,
-                                    list<vector<double> > &history_l1, list<vector<double> > &history_l2);
+                                    list<vector<double> > &history_l1, list<vector<double> > &history_l2, ros::Publisher marker_pub);
 
     		void get_line_ifo_one(Mat imgThresholded, Vec4f plines, double theta, double P_to_L, vector< vector<double> > &line_ifo, 
                           			double &con_max, int &best_line,double delta_x, double delta_y, int &is_line);
@@ -40,10 +40,10 @@ namespace laneloc
 
 			void pub_theta_l(int is_line1, int is_line2, vector<vector<double> > line_ifo_1, vector<vector<double> > line_ifo_2, 
                                      double PI, int best_line1, int best_line2, list<vector<double> > &history_l1, 
-                                     list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub);
+                                     list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub, ros::Publisher marker_pub);
 
 			void Process_all_imageline(vector<Vec4f> lines, Mat imgThresholded, Mat dst, list<double> &history_theta1, 
-                 				list<double> &history_theta2, double num_pic, ros::Publisher pub, double PI, 
+                 				list<double> &history_theta2, double num_pic, ros::Publisher pub, ros::Publisher marker_pub, double PI, 
                 				list< vector<double> > &history_l1, list<vector<double> > &history_l2);
     };
 

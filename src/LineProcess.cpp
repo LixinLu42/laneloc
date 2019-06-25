@@ -13,12 +13,16 @@
 #include "laneloc/encode.h"
 #include "laneloc/LineProcess.h"
 #include "laneloc/laneloc_nodelet.h"
+#include "laneloc/RvizMarker.h"
 
 using namespace std;
 using namespace cv;
 
 namespace laneloc
 {
+
+	RvizMarker rvizmarker;
+
     double LineProcess::get_XZ(double h, double theta, double y, double f, double PI){
 		double res;
 		if(y > 0){
@@ -49,8 +53,8 @@ namespace laneloc
 
     
 
-    void LineProcess::get_theta_l(Mat &dst, vector< vector<double> > line_ifo, int best_line, double result[], 
-                                   double PI, list<vector<double> > &history_l1, list<vector<double> > &history_l2){
+    void LineProcess::get_theta_l(Mat &dst, vector< vector<double> > line_ifo, int best_line, double result[],
+									double PI, list<vector<double> > &history_l1, list<vector<double> > &history_l2, ros::Publisher marker_pub){
 
 		vector<double> line_best_ifo;
 		line_best_ifo.push_back(line_ifo[best_line][0]);
@@ -114,12 +118,18 @@ namespace laneloc
 		  cout<<theta<<endl;
 		  line(image,Point(x_start/3 + 320, 480 - z_start/3), Point(x_end/3 + 320, 480 - z_end/3), Scalar(0,255,0),1,LINE_AA);
 		  history_l1.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, x_start, z_start, x_end, z_end);
+
 		}
 		else{
 		  cout<<"theta < 0"<<endl;
 		  cout<<theta<<endl;
 		  line(image,Point(320 - x_start/3, 480 - z_start/3), Point(320 - x_end/3, 480 - z_end/3), Scalar(0,255,0),1,LINE_AA);
 		  history_l2.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, (-1) * x_start, z_start, (-1) * x_end, z_end);
+
 		}
 		line(image,Point(320, 460), Point(300, 475), Scalar(0,255,0),1,LINE_AA);
 		line(image,Point(320, 460), Point(340, 475), Scalar(0,255,0),1,LINE_AA);
@@ -353,8 +363,8 @@ namespace laneloc
 	}
 
 	void LineProcess::pub_theta_l(int is_line1, int is_line2, vector<vector<double> > line_ifo_1, vector<vector<double> > line_ifo_2, 
-                                  double PI, int best_line1, int best_line2, list<vector<double> > &history_l1, 
-                                  list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub){
+                                  double PI, int best_line1, int best_line2, list<vector<double> > &history_l1,
+								  list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub, ros::Publisher marker_pub){
 
 		double result_1[2];
 		double result_2[2];
@@ -365,17 +375,21 @@ namespace laneloc
 			//计算右边绿线的最优直线与机器人的距离和夹角
 			if(is_line1>0){
 				cout<< "ininininnininini:is_line1is_line1is_line1"<<endl;
-				cout<<"line_ifo.size: " << line_ifo_1.size()<<endl;
-				get_theta_l(dst, line_ifo_1, best_line1, result_1, PI, history_l1, history_l2);
+				cout<< "line_ifo.size: " << line_ifo_1.size()<<endl;
+				get_theta_l(dst, line_ifo_1, best_line1, result_1, PI, history_l1, history_l2, marker_pub);
 
 				message.theta = result_1[0];
 				message.l = result_1[1];
+
+                
 			}
 			//计算左边绿线的最优直线与机器人的距离和夹角
 			if(is_line2>0){
-				get_theta_l(dst, line_ifo_2, best_line2, result_2, PI, history_l1, history_l2);
+				get_theta_l(dst, line_ifo_2, best_line2, result_2, PI, history_l1, history_l2, marker_pub);
 				message.theta = result_2[0];
 				message.l = result_2[1];
+
+
 			}
 		}   
 		pub.publish(message);
@@ -384,7 +398,7 @@ namespace laneloc
 
 
 	void LineProcess::Process_all_imageline(vector<Vec4f> lines, Mat imgThresholded, Mat dst, list<double> &history_theta1, 
-                 				list<double> &history_theta2, double num_pic, ros::Publisher pub, double PI, 
+                 				list<double> &history_theta2, double num_pic, ros::Publisher pub, ros::Publisher marker_pub, double PI, 
                 				list< vector<double> > &history_l1, list<vector<double> > &history_l2){
 		Scalar color = Scalar(0,0,255);
 		double con_max1=180, con_max2=180;
@@ -421,7 +435,7 @@ namespace laneloc
 			cout<<endl;
 		}
 		pub_theta_l(is_line1, is_line2, line_ifo_1, line_ifo_2, PI, best_line1, best_line2, history_l1, 
-				                history_l2, dst, pub);
+				                history_l2, dst, pub, marker_pub);
 	}
 
 } //namespace

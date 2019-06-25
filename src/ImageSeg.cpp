@@ -19,6 +19,9 @@ using namespace cv;
 
 namespace laneloc
 {
+
+    LineProcess lineprocess;
+
 	Mat ImageSeg::get_edge(Mat imgThresholded, Mat pic, bool if_left){
 		int left;
 		int right; 
@@ -58,43 +61,43 @@ namespace laneloc
     void ImageSeg::Process_left_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh, Mat &imgThresholded,
                           Mat &dst, vector<Vec4f> lines, int x){
 
-					  for(int j=0; j<min(480,cross_down_y); ++j){
-						  x = x + cvRound(j * xUnitstep);
-						  int cross_x_right = min(x+210, 640);
-						  //cout<< "xxxxxxxxxxxxxxx" << x <<endl;
-						  //cout<< "cross_x_right" << cross_x_right <<endl;
-						  //cout<< "cross_down_y" << cross_down_y <<endl;
-						  if(x <= 640){
-						      for(int i = x; i <= cross_x_right; ++i){
+		for(int j=0; j<min(480,cross_down_y); ++j){
+			x = x + cvRound(j * xUnitstep);
+			int cross_x_right = min(x+210, 640);
+			//cout<< "xxxxxxxxxxxxxxx" << x <<endl;
+			//cout<< "cross_x_right" << cross_x_right <<endl;
+			//cout<< "cross_down_y" << cross_down_y <<endl;
+			if(x <= 640){
+				for(int i = x; i <= cross_x_right; ++i){
 
-						          if(img_S.at<uchar>(j,i) >= 60 && img_V.at<uchar>(j,i) >= 50 && img_H.at<uchar>(j,i) >= 50 && 
-                                     img_H.at<uchar>(j,i) <= 95){
-						        
-						              imgTh.at<uchar>(j,i) = 255;
+					if(img_S.at<uchar>(j,i) >= 60 && img_V.at<uchar>(j,i) >= 50 && img_H.at<uchar>(j,i) >= 50 && 
+						img_H.at<uchar>(j,i) <= 95){
+				
+						imgTh.at<uchar>(j,i) = 255;
 
-						          } 
-						          img_S.at<uchar>(j,i) = 0;              
-						      }
-						   }
-						   x = x - cvRound(j * xUnitstep);
-					  }
-		
-					  imshow("0", img_H);
-					  imshow("1", img_S);
-					  imshow("2", img_V);
-					  imshow("imgth",imgTh);
-			  
-					  imgThresholded = imgTh.clone();
-					  cvtColor(imgTh,dst,CV_GRAY2BGR);
+					} 
+					img_S.at<uchar>(j,i) = 0;              
+				}
+			}
+			x = x - cvRound(j * xUnitstep);
+		}
 
-					  medianBlur(imgTh,imgTh,3);
-					  imgTh = get_edge(imgThresholded, imgTh, 1); 
-					  imshow("edge", imgTh);
-					  //'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'30'直线上最少点的数量','50'最小直线长度，
-                      //'100'最大间隔（能构成一条直线） 
-					  HoughLinesP(imgTh,lines,1,CV_PI/360, 30, 50, 100); 
+		imshow("0", img_H);
+		imshow("1", img_S);
+		imshow("2", img_V);
+		imshow("imgth",imgTh);
 
-					  cout <<"lines.size(): " << lines.size() << endl;
+		imgThresholded = imgTh.clone();
+		cvtColor(imgTh,dst,CV_GRAY2BGR);
+
+		medianBlur(imgTh,imgTh,3);
+		imgTh = get_edge(imgThresholded, imgTh, 1); 
+		imshow("edge", imgTh);
+		//'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'30'直线上最少点的数量','50'最小直线长度，
+		//'100'最大间隔（能构成一条直线） 
+		HoughLinesP(imgTh,lines,1,CV_PI/360, 30, 50, 100); 
+
+		cout <<"lines.size(): " << lines.size() << endl;
     }
 
 
@@ -166,19 +169,19 @@ namespace laneloc
                     double &mean_x_end1, double &mean_y_end1, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
                     Mat &imgThresholded, Mat &dst, vector<Vec4f> lines){
 		history_l1.pop_front();
-		lineprocess->get_line_meanvalue(history_l1, mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic);
+		lineprocess.get_line_meanvalue(history_l1, mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic);
 
-		double K_right =  lineprocess->get_K(mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1);
+		double K_right =  lineprocess.get_K(mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1);
 		cout<< "K_right " << K_right <<endl;
 
 		int cross_up_x_left = 0, cross_up_y_left = 0;
 		int cross_down_x_left = 0, cross_down_y_left = 0;
-		lineprocess->get_cross_point_left(cross_up_x_left, cross_up_y_left, cross_down_x_left, cross_down_y_left,
+		lineprocess.get_cross_point_left(cross_up_x_left, cross_up_y_left, cross_down_x_left, cross_down_y_left,
 					                           mean_x_start1, mean_y_start1, K_right);
 
 		int minstep, x, y;
 		double xUnitstep, yUnitstep;
-		lineprocess->get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_left, cross_up_y_left,
+		lineprocess.get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_left, cross_up_y_left,
 					                    cross_down_x_left, cross_down_y_left, x, y);
 		Process_left_ROI(cross_down_y_left, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, dst, lines, x);
     }
@@ -188,23 +191,23 @@ namespace laneloc
                     double &mean_x_end2, double &mean_y_end2, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
                     Mat &imgThresholded, Mat &dst, vector<Vec4f> lines){
 		history_l2.pop_front(); 
-		lineprocess->get_line_meanvalue(history_l2, mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic);
+		lineprocess.get_line_meanvalue(history_l2, mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic);
 
-		double K_right =  lineprocess->get_K(mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2);
+		double K_right =  lineprocess.get_K(mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2);
 		cout<< "K_right " << K_right <<endl;
 
 
 		int cross_up_x_right = 0, cross_up_y_right = 0;
 		int cross_down_x_right = 0, cross_down_y_right = 0;
 
-		lineprocess->get_cross_point_right(cross_up_x_right, cross_up_y_right, cross_down_x_right, 
+		lineprocess.get_cross_point_right(cross_up_x_right, cross_up_y_right, cross_down_x_right, 
 				                        cross_down_y_right, mean_x_start2, mean_y_start2, K_right);
 
 
 		int minstep, x, y;
 		double xUnitstep, yUnitstep;
 
-		lineprocess->get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_right, cross_up_y_right,
+		lineprocess.get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_right, cross_up_y_right,
 				                    cross_down_x_right, cross_down_y_right, x, y);
 
 		Process_right_ROI(cross_down_y_right, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, dst, lines, x);

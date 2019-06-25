@@ -11,12 +11,9 @@ using namespace cv;
 namespace laneloc
 {
 
-	class LineProcess;
     class ImageSeg
     {
         public:
-            LineProcess *lineprocess;	
-
 			Mat get_edge(Mat imgThresholded, Mat pic, bool if_left);
 
             void Process_left_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh, Mat &imgThresholded, 

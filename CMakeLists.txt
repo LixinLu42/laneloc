@@ -173,6 +173,7 @@ src/laneloc_nodelet.cpp
 src/ImageSeg.cpp
 src/LineProcess.cpp
 src/LaneLoc.cpp
+src/RvizMarker.cpp
 )
 
 add_dependencies(${PROJECT_NAME} 

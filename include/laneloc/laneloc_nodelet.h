@@ -20,6 +20,8 @@
 #include <boost/bind.hpp>
 
 #include "laneloc/LaneLoc.h"
+#include <visualization_msgs/Marker.h>
+
 
 using namespace std;
 using namespace cv;
@@ -30,19 +32,17 @@ namespace laneloc
     class laneloc_nodeletclass : public nodelet::Nodelet
     {
         public:
-
-
 		    Mat src1;
 			ros::NodeHandle nh;
 			ros::Publisher pub;
+            ros::Publisher marker_pub; 
 			image_transport::Subscriber sub;
+            boost::shared_ptr<boost::thread> spinThread_;
 
-
-
+        public:
             virtual void onInit();
             void Process();
             void imageCallback(const sensor_msgs::ImageConstPtr& msg);
-            boost::shared_ptr<boost::thread> spinThread_;
     };
 }
 #endif 
