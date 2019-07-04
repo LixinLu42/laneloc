@@ -54,7 +54,8 @@ namespace laneloc
     
 
     void LineProcess::get_theta_l(Mat &dst, vector< vector<double> > line_ifo, int best_line, double result[],
-									double PI, list<vector<double> > &history_l1, list<vector<double> > &history_l2, ros::Publisher marker_pub){
+									double PI, list<vector<double> > &history_l1, list<vector<double> > &history_l2, 
+									ros::Publisher marker_pub){
 
 		vector<double> line_best_ifo;
 		line_best_ifo.push_back(line_ifo[best_line][0]);
@@ -85,9 +86,7 @@ namespace laneloc
 		cout<< "Confidence:" << line_ifo[best_line][7] << endl;
 		cout<< "max_size()" << line_ifo.max_size() <<endl;
 		
-		line(dst,Point(point_start_x,point_start_y),Point(point_end_x, point_end_y),Scalar(0,255,0),2,LINE_AA);
-		cout<< "size(): " << line_ifo.size() << endl;
-		cout << "max_size()" << line_ifo.max_size() <<endl;
+		line(dst,Point(point_start_x, point_start_y),Point(point_end_x, point_end_y),Scalar(0,255,0),2,LINE_AA);
 
 		line(dst,Point(0,0),Point(100,100),Scalar(0,255,0),3,LINE_AA);
 		line(dst,Point(0,0),Point(0,100), Scalar(0,255,0),3,LINE_AA);
@@ -112,11 +111,11 @@ namespace laneloc
 		result[0] = atan(1 / K) * 180 / PI - 4.9;
 		result[1] = get_P_to_L(0,0,x_start, z_start, K) + 44;
 
-		Mat image(480,640,CV_8UC3,Scalar(255,255,255));  //创建一个高200，宽100的灰度图
+		Mat image(720,1280,CV_8UC3,Scalar(255,255,255));  //创建一个高200，宽100的灰度图
 		if(0<theta){
 		  cout<<"theta > 0"<<endl;
 		  cout<<theta<<endl;
-		  line(image,Point(x_start/3 + 320, 480 - z_start/3), Point(x_end/3 + 320, 480 - z_end/3), Scalar(0,255,0),1,LINE_AA);
+		  line(image,Point(x_start/3 + 640, 720 - z_start/3), Point(x_end/3 + 640, 720 - z_end/3), Scalar(0,255,0),1,LINE_AA);
 		  history_l1.push_back(line_best_ifo);
 
 		  rvizmarker.markerline(marker_pub, x_start, z_start, x_end, z_end);
@@ -125,21 +124,137 @@ namespace laneloc
 		else{
 		  cout<<"theta < 0"<<endl;
 		  cout<<theta<<endl;
-		  line(image,Point(320 - x_start/3, 480 - z_start/3), Point(320 - x_end/3, 480 - z_end/3), Scalar(0,255,0),1,LINE_AA);
+		  line(image,Point(640 - x_start/3, 720 - z_start/3), Point(640 - x_end/3, 720 - z_end/3), Scalar(0,255,0),1,LINE_AA);
 		  history_l2.push_back(line_best_ifo);
 
 		  rvizmarker.markerline(marker_pub, (-1) * x_start, z_start, (-1) * x_end, z_end);
 
 		}
-		line(image,Point(320, 460), Point(300, 475), Scalar(0,255,0),1,LINE_AA);
-		line(image,Point(320, 460), Point(340, 475), Scalar(0,255,0),1,LINE_AA);
-		line(image,Point(300, 475), Point(340, 475), Scalar(0,255,0),1,LINE_AA);
+		line(image,Point(640, 700), Point(300, 715), Scalar(0,255,0),1,LINE_AA);
+		line(image,Point(640, 700), Point(340, 715), Scalar(0,255,0),1,LINE_AA);
+		line(image,Point(300, 715), Point(340, 715), Scalar(0,255,0),1,LINE_AA);
 		imshow("fushi", image);
 
 
 		cout <<"z_start: " << z_start << " x_start: " << x_start << " z_end: " <<  z_end << " x_end: " <<  x_end<<endl;
 		cout <<"K: " << K <<" theta_real: " << result[0] << " l_real: " << result[1] << " sin(90 * PI /180): " <<endl;
 		cout << endl;
+    }
+
+
+    void LineProcess::get_thetaAndL_fisheye(Mat &dst, vector< vector<double> > line_ifo, int best_line, double result[],
+									double PI, list<vector<double> > &history_l1, list<vector<double> > &history_l2, 
+									ros::Publisher marker_pub, int width_birdimage, int height_birdimage){
+
+		vector<double> line_best_ifo;
+		line_best_ifo.push_back(line_ifo[best_line][0]);
+		line_best_ifo.push_back(line_ifo[best_line][1]);
+		line_best_ifo.push_back(line_ifo[best_line][2]);
+		line_best_ifo.push_back(line_ifo[best_line][3]);
+		line_best_ifo.push_back(line_ifo[best_line][4]);
+		line_best_ifo.push_back(line_ifo[best_line][5]);
+		line_best_ifo.push_back(line_ifo[best_line][6]);
+		line_best_ifo.push_back(line_ifo[best_line][7]);
+
+		int point_start_x = line_ifo[best_line][0];
+		int point_start_y = line_ifo[best_line][1];
+		int point_end_x = line_ifo[best_line][2]; 	
+		int point_end_y = line_ifo[best_line][3];
+		double theta = line_ifo[best_line][4];
+
+				
+		cout<< "best_line " << best_line << endl;
+		cout<< "line_ifo_size(): " << line_ifo.size() << endl;
+		cout<< "(x1,y1): " << line_ifo[best_line][0] << ","<< line_ifo[best_line][1] <<endl;
+		cout<< "(x2,y2): " << line_ifo[best_line][2] << "," << line_ifo[best_line][3] <<endl;
+		cout<< "theta_best_l: " << line_ifo[best_line][4] <<endl;
+		cout<< "P_to_L: " << line_ifo[best_line][5] <<endl;
+		cout<< "mid_point: " << line_ifo[best_line][6] <<endl;
+		cout<< "Confidence:" << line_ifo[best_line][7] << endl;
+		cout<< "max_size()" << line_ifo.max_size() <<endl;
+		
+		line(dst,Point(point_start_x,point_start_y),Point(point_end_x, point_end_y),Scalar(0,255,0),2,LINE_AA);
+
+		line(dst,Point(0,0),Point(100,100),Scalar(0,255,0),3,LINE_AA);
+		line(dst,Point(0,0),Point(0,100), Scalar(0,255,0),3,LINE_AA);
+
+		double K;
+		if(point_end_x != point_start_x){
+			K = ((point_end_y - point_start_y) / (point_end_x - point_start_x));
+			result[0] = atan(1 / K) * 180 / PI;
+			result[1] = get_P_to_L(0,0,point_start_x, point_start_y, K);
+		}
+		else{
+			K = 1000000;
+			result[0] = 0;
+			result[1] = get_P_to_L(0,0,point_start_x, point_start_y, K);
+		}
+
+		if(point_end_x  > width_birdimage/2 ){
+		  cout<<"theta > 0: "<< theta << endl;
+		  history_l1.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, point_start_x, point_start_y, point_end_x, point_end_y);
+		}
+		else{
+		  cout<<"theta <= 0: "<< theta << endl;
+		  history_l2.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, (-1) * point_start_x, point_start_y, (-1) * point_end_x, point_end_y);
+		}
+
+		cout <<"point_start_x: " << point_start_x << " point_start_y: " << point_start_y << " K: " << K <<
+		" point_end_x: " <<  point_end_x << " point_end_y: " <<  point_end_y << " theta_real: " << result[0] << " l_real: " << result[1] << " sin(90 * PI /180): " <<endl;
+		cout << endl;
+
+
+
+
+		 /***  
+		double f=617.2258911132812, h=280, J=15 * PI /180;
+		double delta_start_y =  point_start_y - dst.rows/2;
+		double delta_start_x =  abs(point_start_x - dst.cols/2);
+
+		cout<< "sinf(theta) " << sinf(J) << " cosf(theta) " 	<< cosf(J) <<endl;
+		double z_start = get_XZ(h, J, delta_start_y, f, PI);
+		double x_start = delta_start_x * z_start / f;
+
+		double delta_end_y = point_end_y - dst.rows/2;
+		double delta_end_x = abs(point_end_x - dst.cols/2);
+		double z_end = get_XZ(h, J, delta_end_y, f, PI);
+		double x_end = delta_end_x * z_end / f;
+
+		cout <<"delta_end_x: " << delta_end_x << " delta_end_y: " << delta_end_y
+			 << " delta_start_x: " <<  delta_start_x << " delta_start_y: " <<  delta_start_y <<endl;
+
+		double K = ((z_end - z_start) / (x_end - x_start));
+		result[0] = atan(1 / K) * 180 / PI - 4.9;
+		result[1] = get_P_to_L(0,0,x_start, z_start, K) + 44;
+
+		Mat image(720,1280,CV_8UC3,Scalar(255,255,255));  //创建一个高200，宽100的灰度图
+		if(0<theta){
+		  cout<<"theta > 0"<<endl;
+		  cout<<theta<<endl;
+		  line(image,Point(x_start/3 + 640, 720 - z_start/3), Point(x_end/3 + 640, 720 - z_end/3), Scalar(0,255,0),1,LINE_AA);
+		  history_l1.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, x_start, z_start, x_end, z_end);
+
+		}
+		else{
+		  cout<<"theta < 0"<<endl;
+		  cout<<theta<<endl;
+		  line(image,Point(640 - x_start/3, 720 - z_start/3), Point(640 - x_end/3, 720 - z_end/3), Scalar(0,255,0),1,LINE_AA);
+		  history_l2.push_back(line_best_ifo);
+
+		  rvizmarker.markerline(marker_pub, (-1) * x_start, z_start, (-1) * x_end, z_end);
+
+		}
+
+		cout <<"z_start: " << z_start << " x_start: " << x_start << " z_end: " <<  z_end << " x_end: " <<  x_end<<endl;
+		cout <<"K: " << K <<" theta_real: " << result[0] << " l_real: " << result[1] << " sin(90 * PI /180): " <<endl;
+		cout << endl;
+		***/
     }
 
     void LineProcess::get_line_ifo_one(Mat imgThresholded, Vec4f plines, double theta, double P_to_L, vector< vector<double> > &line_ifo, 
@@ -165,7 +280,6 @@ namespace laneloc
       double xUnitstep = abs(delta_x) /minstep;
       double yUnitstep = abs(delta_y) /minstep;
 
-
       cout<< "xUnitstep: " << xUnitstep<<endl;
       cout<< "yUnitstep: " << yUnitstep<<endl;
 
@@ -181,12 +295,12 @@ namespace laneloc
 
           if(imgThresholded.at<uchar>(y,x) == 255){
               mid_point++;
-	          if(imgThresholded.at<uchar>(y,x-3)==0 && imgThresholded.at<uchar>(y,x-5) == 0 && imgThresholded.at<uchar>(y,x-10) == 0){
+	          if(imgThresholded.at<uchar>(y,x-1)==0 && imgThresholded.at<uchar>(y,x-2) == 0 ){
 	              left_point++; 
               } 
-	          if(imgThresholded.at<uchar>(y,x+3) == 255 &&  imgThresholded.at<uchar>(y,x+5) == 255 && imgThresholded.at<uchar>(y,x+10) == 255){
+	          if(imgThresholded.at<uchar>(y,x+1) == 255 &&  imgThresholded.at<uchar>(y,x+2) == 255 ){
 	              right_point++;
-	          }          
+	          }
 	      }
           x = x - cvRound(j * xUnitstep);
           y = y - cvRound(j * yUnitstep);
@@ -239,10 +353,10 @@ namespace laneloc
 		  mean_x_end /= num_pic;
 		  mean_y_end /= num_pic;
 
-		  cout<< "min_x_start: " << mean_x_start <<endl;
-		  cout<< "min_y_start: " << mean_y_start <<endl;
-		  cout<< "min_x_end: " << mean_x_end <<endl;
-		  cout<< "min_y_end: " << mean_y_end <<endl;
+		  cout<< "mean_x_start: " << mean_x_start <<endl;
+		  cout<< "mean_y_start: " << mean_y_start <<endl;
+		  cout<< "mean_x_end: " << mean_x_end <<endl;
+		  cout<< "mean_y_end: " << mean_y_end <<endl;
 		  cout<< "mean_x_end - mean_x_start " << mean_x_end - mean_x_start << endl;
 		  cout<< "mean_y_end - mean_y_start " << mean_y_end - mean_y_start <<endl;
     }
@@ -263,25 +377,26 @@ namespace laneloc
     }
 
 
-    void LineProcess::get_cross_point_left(int &cross_up_x_left, int &cross_up_y_left, int &cross_down_x_left, int &cross_down_y_left,
-                                                           double mean_x_start, double mean_y_start, double K_right){
+    void LineProcess::get_cross_point_left(double &cross_up_x_left, double &cross_up_y_left, double &cross_down_x_left, double &cross_down_y_left,
+                                                           double mean_x_start, double mean_y_start, double K_right,
+														   int width_birdimage, int height_birdimage){
 	    int cross_up_x =  mean_x_start - mean_y_start / K_right;
 	    int cross_up_y = 0;
-	    int cross_down_x = mean_x_start + (480 - mean_y_start)/K_right;
-	    int cross_down_y = 480;
+	    int cross_down_x = mean_x_start + (height_birdimage - mean_y_start)/K_right;
+	    int cross_down_y = height_birdimage;
 
-	    cross_up_x_left = cross_up_x -90;
+	    cross_up_x_left = cross_up_x - 90;
 	    cross_up_y_left = 0;
 	    cross_down_x_left = cross_down_x - 90;
-	    cross_down_y_left = 480;
+	    cross_down_y_left = height_birdimage;
 
-	    if(cross_down_x >640){
-		    cross_down_x = 640;
-		    cross_down_y = K_right * (640 - mean_x_start) + mean_y_start;
+	    if(cross_down_x > width_birdimage){
+		    cross_down_x = width_birdimage;
+		    cross_down_y = K_right * (width_birdimage - mean_x_start) + mean_y_start;
 
-		    if(cross_down_x_left > 640){
-		        cross_down_x_left = 640;
-		        cross_down_y_left = 730 * (K_right) - K_right * mean_x_start + mean_y_start;
+		    if(cross_down_x_left > width_birdimage){
+		        cross_down_x_left = width_birdimage;
+		        cross_down_y_left = K_right * (width_birdimage + 90 - mean_x_start) + mean_y_start;
 		    }
 	    }
 	    cout << "cross_up_x" << cross_up_x <<endl;
@@ -289,19 +404,20 @@ namespace laneloc
     }
 
 
-    void LineProcess::get_cross_point_right(int &cross_up_x_right, int &cross_up_y_right, int &cross_down_x_right, int &cross_down_y_right,
-                                                           double mean_x_start, double mean_y_start, double K_right){
+    void LineProcess::get_cross_point_right(double &cross_up_x_right, double &cross_up_y_right, double &cross_down_x_right,
+							double &cross_down_y_right, double mean_x_start, double mean_y_start, double K_right,
+							int width_birdimage, int height_birdimage){
 
 		int cross_up_x =  mean_x_start - mean_y_start / K_right;
 		int cross_up_y = 0;
-		int cross_down_x = mean_x_start + (480 - mean_y_start)/K_right;
-		int cross_down_y = 480;
+		int cross_down_x = mean_x_start + (height_birdimage - mean_y_start)/K_right;
+		int cross_down_y = height_birdimage;
 
 
 		cross_up_x_right = cross_up_x + 120;
 		cross_up_y_right = 0;
 		cross_down_x_right = cross_down_x + 120;
-		cross_down_y_right = 480;
+		cross_down_y_right = height_birdimage;
 
 
 		if(cross_down_x < 0){
@@ -318,10 +434,10 @@ namespace laneloc
     }
 
 
-	void LineProcess::get_Unitstep(int &minstep, double &xUnitstep, double &yUnitstep, int cross_up_x, int cross_up_y,
-				                   int cross_down_x, int cross_down_y, int &x, int &y){
+	void LineProcess::get_Unitstep(double &minstep, double &xUnitstep, double &yUnitstep, double cross_up_x, 
+								double cross_up_y, double cross_down_x, double cross_down_y, int &x, int &y){
 
-		x = cross_up_x, y = cross_up_y;	
+		x = cross_up_x, y = cross_up_y;
 		if(abs(cross_down_x - cross_up_x) > abs(cross_down_y - cross_up_y)){
 		    minstep = abs(cross_down_y - cross_up_y);
 		}
@@ -346,7 +462,7 @@ namespace laneloc
 			double mean_theta;
 			get_theta_mean(history_theta, mean_theta, num_pic);
 			cout<< "abs(mean_theta - theta): " << abs(mean_theta - theta) <<endl;
-			if(abs(mean_theta - theta) < 10){
+			if(abs(mean_theta - theta) < 20){
 				cout<< "11111111111111111"<<endl;
 				history_theta.push_back(theta);
 				get_line_ifo_one(imgThresholded, plines, theta, P_to_L, line_ifo, con_max, best_line,
@@ -358,14 +474,15 @@ namespace laneloc
 			history_theta.push_back(theta);
 			get_line_ifo_one(imgThresholded, plines, theta, P_to_L, line_ifo, con_max, best_line,
 			                             delta_x, delta_y, is_line);
+			
 		}
 
 	}
 
 	void LineProcess::pub_theta_l(int is_line1, int is_line2, vector<vector<double> > line_ifo_1, vector<vector<double> > line_ifo_2, 
                                   double PI, int best_line1, int best_line2, list<vector<double> > &history_l1,
-								  list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub, ros::Publisher marker_pub){
-
+								  list<vector<double> > &history_l2, Mat &dst, ros::Publisher pub, ros::Publisher marker_pub,
+								  int width_birdimage, int height_birdimage){
 		double result_1[2];
 		double result_2[2];
 		laneloc::encode message;
@@ -376,7 +493,9 @@ namespace laneloc
 			if(is_line1>0){
 				cout<< "ininininnininini:is_line1is_line1is_line1"<<endl;
 				cout<< "line_ifo.size: " << line_ifo_1.size()<<endl;
-				get_theta_l(dst, line_ifo_1, best_line1, result_1, PI, history_l1, history_l2, marker_pub);
+				//get_theta_l(dst, line_ifo_1, best_line1, result_1, PI, history_l1, history_l2, marker_pub);
+				get_thetaAndL_fisheye(dst, line_ifo_1, best_line1, result_1, PI, history_l1, history_l2, marker_pub, 
+										width_birdimage, height_birdimage);
 
 				message.theta = result_1[0];
 				message.l = result_1[1];
@@ -385,7 +504,8 @@ namespace laneloc
 			}
 			//计算左边绿线的最优直线与机器人的距离和夹角
 			if(is_line2>0){
-				get_theta_l(dst, line_ifo_2, best_line2, result_2, PI, history_l1, history_l2, marker_pub);
+				get_thetaAndL_fisheye(dst, line_ifo_2, best_line2, result_2, PI, history_l1, history_l2, marker_pub,
+										width_birdimage, height_birdimage);
 				message.theta = result_2[0];
 				message.l = result_2[1];
 
@@ -399,7 +519,8 @@ namespace laneloc
 
 	void LineProcess::Process_all_imageline(vector<Vec4f> lines, Mat imgThresholded, Mat dst, list<double> &history_theta1, 
                  				list<double> &history_theta2, double num_pic, ros::Publisher pub, ros::Publisher marker_pub, double PI, 
-                				list< vector<double> > &history_l1, list<vector<double> > &history_l2){
+                				list< vector<double> > &history_l1, list<vector<double> > &history_l2,
+								int width_birdimage, int height_birdimage){
 		Scalar color = Scalar(0,0,255);
 		double con_max1=180, con_max2=180;
 		int best_line1=0, best_line2=0;
@@ -414,13 +535,30 @@ namespace laneloc
 			double delta_x = plines[0] - plines[2], delta_y = plines[1] - plines[3];
 			double K1 = delta_y / delta_x;
 			double theta = atan(K1) * 180/PI;
+
 			cout<< "theta: "  << theta << endl;
+			cout<< "width_birdimage: " << width_birdimage << endl;
+			cout<< "plines[0]: "  << plines[0] << endl;
+			cout<< "plines[1]: "  << plines[1] << endl;
+			cout<< "plines[2]: "  << plines[2] << endl;
+			cout<< "plines[3]: "  << plines[3] << endl;
+
 
 			double P_to_L = get_P_to_L(imgThresholded.cols/2,imgThresholded.rows, plines[0], plines[1], K1);
 			//double line_len = pow((pow(delta_x,2) + pow(delta_y,2)),0.5);
 			line(dst,Point(plines[0],plines[1]),Point(plines[2],plines[3]),color,1,LINE_AA);
 			
 			//右边绿线的检测、置信度计算、提取最优
+			if(abs(theta) >= 80 && plines[2] > width_birdimage/2) {
+				Process_half_imageline(history_theta1, num_pic, imgThresholded, plines, theta, P_to_L,
+				                                  line_ifo_1, con_max1, best_line1, delta_x, delta_y, is_line1);
+			}
+			//左边绿线的检测、置信度计算、提取最优
+			if(abs(theta) >=80 && plines[2] < width_birdimage/2) {
+				Process_half_imageline(history_theta2, num_pic, imgThresholded, plines, theta, P_to_L,
+				                                  line_ifo_2, con_max2, best_line2, delta_x, delta_y, is_line2);
+			}
+			/*** 
 			if(theta >= 30 && theta <= 70) {
 				Process_half_imageline(history_theta1, num_pic, imgThresholded, plines, theta, P_to_L,
 				                                  line_ifo_1, con_max1, best_line1, delta_x, delta_y, is_line1);
@@ -430,12 +568,13 @@ namespace laneloc
 				Process_half_imageline(history_theta2, num_pic, imgThresholded, plines, theta, P_to_L,
 				                                  line_ifo_2, con_max2, best_line2, delta_x, delta_y, is_line2);
 			}
+			***/
 			cout<< "is_line1: " << is_line1 <<endl;
 			cout<< "is_line2: " << is_line2 <<endl;
 			cout<<endl;
 		}
 		pub_theta_l(is_line1, is_line2, line_ifo_1, line_ifo_2, PI, best_line1, best_line2, history_l1, 
-				                history_l2, dst, pub, marker_pub);
+				                history_l2, dst, pub, marker_pub, width_birdimage, height_birdimage);
 	}
 
 } //namespace

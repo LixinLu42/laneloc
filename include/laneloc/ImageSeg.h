@@ -17,20 +17,31 @@ namespace laneloc
 			Mat get_edge(Mat imgThresholded, Mat pic, bool if_left);
 
             void Process_left_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh, Mat &imgThresholded, 
-                             Mat &dst, vector<Vec4f> lines, int x);
+                             Mat &dst, vector<Vec4f> lines, int x, int width_birdimage, int height_birdimage);
 
      		void Process_right_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh, Mat &imgThresholded,
-                             Mat &dst, vector<Vec4f> lines, int x);
+                             Mat &dst, vector<Vec4f> lines, int x, int width_birdimage, int height_birdimage);
 
 			void initialize(Mat imgHSV, Mat &imgThresholded, Mat &dst, Mat &imgTh, vector<Vec4f> &lines);
 
     		void Process_right_image(list<vector<double> > &history_l1, double &mean_x_start1, double &mean_y_start1,
                     	double &mean_x_end1, double &mean_y_end1, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
-                    	Mat &imgThresholded, Mat &dst, vector<Vec4f> lines);
+                    	Mat &imgThresholded, Mat &dst, vector<Vec4f> lines,
+						int width_birdimage, int height_birdimage);
 
     		void Process_left_image(list<vector<double> > &history_l2, double &mean_x_start2, double &mean_y_start2,
                     	double &mean_x_end2, double &mean_y_end2, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
-                    	Mat &imgThresholded, Mat &dst, vector<Vec4f> lines);
+                    	Mat &imgThresholded, Mat &dst, vector<Vec4f> lines,
+						int width_birdimage, int height_birdimage);
+		private:
+			int iLowH= 50;
+			int iHighH = 95;  
+			int iLowS = 60;   
+			int iHighS = 255;  
+			int iLowV = 50;  
+			int iHighV = 255; 
+ 
+
     };
 }
 

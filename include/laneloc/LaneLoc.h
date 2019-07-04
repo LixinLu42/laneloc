@@ -14,8 +14,10 @@ namespace laneloc
     class LaneLoc 
     {
         public:
-    		void laneloc(Mat src1,ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, list<vector<double> > &history_l2,
+    		void laneloc(Mat src,ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, list<vector<double> > &history_l2,
                     list<double> &history_theta1, list<double> &history_theta2);
+            void laneloc_fisheye(Mat src, ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, 
+			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2);
            
     };
 }
