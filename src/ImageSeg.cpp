@@ -35,7 +35,7 @@ namespace laneloc
 
 		for(int j=0; j < imgThresholded.rows; ++j){
 		    for(int i=(imgThresholded.cols / 2 ); i >= 0 ; --i){
-		        if(imgThresholded.at<uchar>(j,i-2) == right && imgThresholded.at<uchar>(j,i+1) == left ){
+		        if(imgThresholded.at<uchar>(j,i-1) == right && imgThresholded.at<uchar>(j,i+1) == left ){
 		             //--i;
 		             continue;               
 		        }
@@ -46,8 +46,7 @@ namespace laneloc
 		    }
 
 		    for(int i=(imgThresholded.cols / 2 ); i < (imgThresholded.cols); ++i){
-		        if(imgThresholded.at<uchar>(j,i-3) == left && imgThresholded.at<uchar>(j,i-2) == left && 
-                   imgThresholded.at<uchar>(j,i-1) == left &&imgThresholded.at<uchar>(j,i+1) == right){
+		        if(imgThresholded.at<uchar>(j,i-1) == left && imgThresholded.at<uchar>(j,i+1) == right){
 		             //i++;
 		             continue;               
 		        }
@@ -59,89 +58,92 @@ namespace laneloc
 		return pic;
 	}
 
-    void ImageSeg::Process_left_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh,
-		Mat &imgThresholded, Mat &dst, vector<Vec4f> lines, int x, int width_birdimage, int height_birdimage){
+    void ImageSeg::Process_left_ROI(int cross_down_y, double xUnitstep, Mat &imgTh, Mat &dst, vector<Vec4f> &lines, 
+							int x, int width_birdimage, int height_birdimage, Mat birdImage, Mat &imgThresholded,
+							double K_right){
+
 		for(int j=0; j<min(height_birdimage,cross_down_y); ++j){
-			x = x + cvRound(j * xUnitstep);
-			//cout << "xUnitstep: " << xUnitstep <<endl;
-			int cross_x_right = min(x+210, width_birdimage);
+			if(K_right >= 1 || K_right <= -1){
+				if(j % int(K_right) == 0){
+					x = x + xUnitstep;
+				}
+			}
+			int cross_x_right = min(x+80, width_birdimage);
 			if(x <= width_birdimage){
 
 				for(int i = x; i <= cross_x_right; ++i){
-					if(img_S.at<uchar>(j,i) >= 60 && img_V.at<uchar>(j,i) >= 50 && 
-						img_H.at<uchar>(j,i) >= 50 && img_H.at<uchar>(j,i) <= 95){
+					if(birdImage.at<uchar>(j,i) > 0){
 				
 						imgTh.at<uchar>(j,i) = 255;
 					} 
-					img_S.at<uchar>(j,i) = 0;       
-       
 				}
 			}
-			x = x - cvRound(j * xUnitstep);
+			
 		}
-
-		imshow("0", img_H);
-		imshow("1", img_S);
-		imshow("2", img_V);
 
 		imshow("imgth",imgTh);
 
+		//imwrite("/home/llx/geekplus/cut_video_handle/bird/imgTh.jpg",imgTh);
+		
 		imgThresholded = imgTh.clone();
-		cvtColor(imgTh,dst,CV_GRAY2BGR);
 
-		medianBlur(imgTh,imgTh,3);
+		//cvtColor(imgTh,dst,CV_GRAY2BGR);
+		//medianBlur(imgTh,imgTh,3);
 		imgTh = get_edge(imgThresholded, imgTh, 1);
 
 		imshow("edge", imgTh);
+		//imwrite("/home/llx/geekplus/cut_video_handle/bird/edge.jpg",imgTh);
+
 
 		//'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'30'直线上最少点的数量','50'最小直线长度，
 		//'100'最大间隔（能构成一条直线） 
-		HoughLinesP(imgTh,lines,1,CV_PI/360, 10, 10, 100); 
+		HoughLinesP(imgTh,lines,1,CV_PI/360, 30, 50, 100); 
 
 		cout <<"lines.size(): " << lines.size() << endl;
     }
 
 
-    void ImageSeg::Process_right_ROI(int cross_down_y, int xUnitstep, Mat img_S, Mat img_V,  Mat img_H, Mat &imgTh, Mat &imgThresholded,
-                          Mat &dst, vector<Vec4f> lines, int x, int width_birdimage, int height_birdimage){
-
+    void ImageSeg::Process_right_ROI(int cross_down_y, double xUnitstep, Mat &imgTh,Mat &dst, vector<Vec4f> &lines,
+					int x, int width_birdimage, int height_birdimage, Mat birdImage, Mat &imgThresholded,
+					double K_right){
+		cout << "cross_down_y: " << cross_down_y <<endl;
 		for(int j=0; j < min(height_birdimage, cross_down_y); ++j){
-		  x = x - cvRound(j * xUnitstep);
+
     	  //cout << "xUnitstep: " << xUnitstep <<endl;
-
-		  int cross_x_right = max(x-210, 0);
-		  if(x >= 0){
-			  for(int i = x; i >= cross_x_right; --i){
-
-				  if(img_S.at<uchar>(j,i) >= iLowS && img_V.at<uchar>(j,i) >= iLowV && 
-				  		img_H.at<uchar>(j,i) >= iLowH && img_H.at<uchar>(j,i) <= iHighH){
-				
-				      imgTh.at<uchar>(j,i) = 255;
-
-				  } 
-				  img_S.at<uchar>(j,i) = 0;              
-			  }
-		   }
-		   x = x + cvRound(j * xUnitstep);
+			if(K_right >= 1 || K_right <= -1){
+				if(j % int(K_right) == 0){
+					x = x - xUnitstep;
+				}
+			}
+			int cross_x_right = max(x-80, 0);
+			if(x >= 0){
+				for(int i = x; i >= cross_x_right; --i){
+					if(birdImage.at<uchar>(j,i) > 0){
+						imgTh.at<uchar>(j,i) = 255;
+					} 
+				}
+			}
 		}
 
-		imshow("0", img_H);
-		imshow("1", img_S);
-		imshow("2", img_V);
+
 		imshow("imgth",imgTh);
 
-		imgThresholded = imgTh.clone();
-		cvtColor(imgTh,dst,CV_GRAY2BGR);
+		//imwrite("/home/llx/geekplus/cut_video_handle/bird/imgTh.jpg",imgTh);
 
-		medianBlur(imgTh,imgTh,3);
+
+
+		imgThresholded = imgTh.clone();
+		//cvtColor(imgTh,dst,CV_GRAY2BGR);
+
+		//medianBlur(imgTh,imgTh,3);
 		imgTh = get_edge(imgThresholded, imgTh, 1); 
 		imshow("edge", imgTh);
 		//'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'20'直线上最少点的数量','10'最小直线长度，'0'最大间隔（能构成一条直线） 
-		HoughLinesP(imgTh,lines,1,CV_PI/360, 10, 10, 100); 
+		HoughLinesP(imgTh,lines,1,CV_PI/360, 30, 50, 100); 
 		cout <<"lines.size(): " << lines.size() << endl;
     }
 
-	void ImageSeg::initialize(Mat imgHSV, Mat &imgThresholded, Mat &dst, Mat &imgTh, vector<Vec4f> &lines){
+	void ImageSeg::initialize(Mat birdImage, Mat &imgThresholded, Mat &dst, Mat &imgTh, vector<Vec4f> &lines){
 		/***
 		int iLowH_G= 50;
 		int iHighH_G = 95;  
@@ -158,21 +160,23 @@ namespace laneloc
 
 		***/
 
-		cvtColor(imgThresholded,dst,CV_GRAY2BGR);
+		//cvtColor(birdImage,dst,CV_GRAY2BGR);
 
-		imgTh = imgThresholded.clone();
+		imgTh = birdImage.clone();
+		imgThresholded = imgTh.clone();
+
 		//medianBlur(imgTh, imgTh,3);
 		imgTh = get_edge(imgThresholded, imgTh, 1); 
 
 		imshow("edge", imgTh);
 		//'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'20'直线上最少点的数量','10'最小直线长度，'0'最大间隔（能构成一条直线） 
-		HoughLinesP(imgTh,lines,1,CV_PI/360, 20, 10, 100);
+		HoughLinesP(imgTh,lines,1,CV_PI/360, 30, 50, 100);
 		cout <<"lines.size(): " << lines.size() << endl;
     }
                    
     void ImageSeg::Process_right_image(list<vector<double> > &history_l1, double &mean_x_start1, double &mean_y_start1,
-                    double &mean_x_end1, double &mean_y_end1, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
-                    Mat &imgThresholded, Mat &dst, vector<Vec4f> lines, int width_birdimage, int height_birdimage){
+                    double &mean_x_end1, double &mean_y_end1, double num_pic, Mat &imgTh, Mat &dst, 
+					vector<Vec4f> &lines, int width_birdimage, int height_birdimage, Mat birdImage, Mat &imgThresholded){
 		history_l1.pop_front();
 		lineprocess.get_line_meanvalue(history_l1, mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic);
 
@@ -186,31 +190,31 @@ namespace laneloc
 		int x, y;
 		double xUnitstep, yUnitstep;
 
-		if(K_right  > -100000 && K_right <= 100000){
+		if(K_right  > -100 && K_right <= 100){
 			cout << "K_right  > -100000 && K_right <= 100000" <<endl;
 			lineprocess.get_cross_point_left(cross_up_x_left, cross_up_y_left, cross_down_x_left, cross_down_y_left,
 					                           mean_x_start1, mean_y_start1, K_right, width_birdimage, height_birdimage);			
 			lineprocess.get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_left, cross_up_y_left,
 											cross_down_x_left, cross_down_y_left, x, y);
-			Process_left_ROI(cross_down_y_left, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, 
-								dst, lines, x,width_birdimage, height_birdimage);
+			Process_left_ROI(cross_down_y_left, xUnitstep, imgTh,
+								dst, lines, x,width_birdimage, height_birdimage, birdImage, imgThresholded, K_right);
 		}
 		else{
 			cout << "K_right == -inf" <<endl;
 
 			cross_down_y_left = height_birdimage;
-			xUnitstep = 0.01;
+			xUnitstep = 0;
 			x = mean_x_start1;
-			Process_left_ROI(cross_down_y_left, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, 
-								dst, lines, x,width_birdimage, height_birdimage);
+			Process_left_ROI(cross_down_y_left, xUnitstep, imgTh,
+								dst, lines, x,width_birdimage, height_birdimage, birdImage, imgThresholded, K_right);
 
 		}
     }
 
 
     void ImageSeg::Process_left_image(list<vector<double> > &history_l2, double &mean_x_start2, double &mean_y_start2,
-                    double &mean_x_end2, double &mean_y_end2, double num_pic, Mat &img_S, Mat &img_V, Mat &img_H, Mat &imgTh, 
-                    Mat &imgThresholded, Mat &dst, vector<Vec4f> lines, int width_birdimage, int height_birdimage){
+                    double &mean_x_end2, double &mean_y_end2, double num_pic, Mat &imgTh, Mat &dst, 
+					vector<Vec4f> &lines, int width_birdimage, int height_birdimage, Mat birdImage, Mat &imgThresholded){
 		history_l2.pop_front(); 
 		lineprocess.get_line_meanvalue(history_l2, mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic);
 
@@ -225,7 +229,7 @@ namespace laneloc
 		int x, y;
 		double xUnitstep, yUnitstep;
 
-        if(K_right  > -100000 && K_right <= 100000){
+        if(K_right  > -100 && K_right <= 100){
 			cout << "K_right  > -100000 && K_right <= 100000" <<endl;
 			lineprocess.get_cross_point_right(cross_up_x_right, cross_up_y_right, cross_down_x_right, 
 											cross_down_y_right, mean_x_start2, mean_y_start2, K_right,
@@ -234,17 +238,17 @@ namespace laneloc
 			lineprocess.get_Unitstep(minstep, xUnitstep, yUnitstep, cross_up_x_right, cross_up_y_right,
 										cross_down_x_right, cross_down_y_right, x, y);
 
-			Process_right_ROI(cross_down_y_right, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, 
-									dst, lines, x, width_birdimage, height_birdimage);
+			Process_right_ROI(cross_down_y_right, xUnitstep, imgTh, 
+									dst, lines, x, width_birdimage, height_birdimage, birdImage, imgThresholded, K_right);
 
 		}
 		else{
 			cout << "K_right == -inf" <<endl;
 			cross_down_y_right = height_birdimage;
-			xUnitstep = 0.01;
+			xUnitstep = 0;
 			x = mean_x_start2;
-			Process_right_ROI(cross_down_y_right, xUnitstep, img_S, img_V, img_H, imgTh, imgThresholded, 
-									dst, lines, x, width_birdimage, height_birdimage);
+			Process_right_ROI(cross_down_y_right, xUnitstep, imgTh,
+									dst, lines, x, width_birdimage, height_birdimage, birdImage, imgThresholded, K_right);
 		}
 
 

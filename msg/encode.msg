@@ -1,3 +1,3 @@
-int64 theta
-int64 l
+float64 theta
+float64 l
 

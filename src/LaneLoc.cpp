@@ -13,11 +13,13 @@
 #include "laneloc/encode.h"
 #include "laneloc/LaneLoc.h"
 
+
 using namespace std;
 using namespace cv;
 
 namespace laneloc
-{			
+{		
+	/***	
     void LaneLoc::laneloc(Mat src,ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, 
 			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2){
 
@@ -117,14 +119,12 @@ namespace laneloc
 
 				if(history_l1.size()>num_pic){
                     imageseg.Process_right_image(history_l1,  mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic, 
-                                                    img_S, img_V, img_H, imgTh, imgThresholded, dst, lines, 
-													width_birdimage, height_birdimage);
+                                                    imgTh, imgThresholded, dst, lines, width_birdimage, height_birdimage);
 				}
 
 				else if(history_l2.size() > num_pic){
                     imageseg.Process_left_image(history_l2,  mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, 
-								num_pic, img_S, img_V, img_H, imgTh, imgThresholded, dst, lines,
-								width_birdimage, height_birdimage);
+								num_pic, imgTh, imgThresholded, dst, lines, width_birdimage, height_birdimage);
 				}
 
 				else{
@@ -141,29 +141,121 @@ namespace laneloc
 		    }
 
   	}
-
+	***/
 
 	void LaneLoc::laneloc_fisheye(Mat src, ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, 
 			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2){
 
 			double PI = 3.1415926535;
-			Mat gray_src, dst,imgHSV, pic, imgThresholded;
+			Mat gray_src, dst,imgHSV, pic, imgThresholded, fisheye_thr;
 
             if(src.empty()){
                 cout<< "src is empty!"<<endl;
             }
             else{
-				cv::imwrite("/home/llx/catkin_ws/src/img_src/3.jpg", src);
+				imshow("fisheye",src);
+				
 
+
+				cvtColor(src, imgHSV, COLOR_BGR2HSV);//转为HSV
+
+				/***
+				cvtColor(src, pic, COLOR_BGR2GRAY);//转为GRAY
+
+				threshold(pic, pic, 255, 255, CV_THRESH_BINARY);
+
+				//cout << "pic.size(): " << pic.size() <<endl;
+				imshow("thr",pic);
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/thr.jpg",pic);
+
+				Mat pic_h =  pic.clone();
+				Mat pic_s =  pic.clone();
+				Mat pic_v =  pic.clone();
+
+
+				vector<Mat> channels;
+				cv::split(imgHSV, channels);
+
+
+				Mat img_H = channels.at(0);
+				Mat img_S = channels.at(1);
+				Mat img_V = channels.at(2);
+
+				//imshow("img_H",img_H);
+				//imshow("img_S",img_S);
+				//imshow("img_V",img_V);
+
+
+				for(int i =0 ; i< imgHSV.rows; ++i){
+					for(int j =0 ; j< imgHSV.cols; ++j){
+						//cout<< "1"<< " " << i  << " "<< j <<endl; 
+						//cout<< "imgHSV.cols: "<< imgHSV.cols << "imgHSV.rows"  << imgHSV.rows <<endl; 
+
+						if(img_H.at<uchar>(i,j) >= iLowH && img_H.at<uchar>(i,j) <= iHighH){
+							//cout<< "continue" <<endl; 
+							pic_h.at<uchar>(i,j) = 255;			
+
+						} 
+					}
+				}
+				imshow("H",pic_h);
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/H.jpg",pic);
+
+
+
+				for(int i =0 ; i<imgHSV.rows; ++i){
+					for(int j =0 ; j<imgHSV.cols; ++j){
+
+						if(img_V.at<uchar>(i,j) >= iLowV && img_V.at<uchar>(i,j) <= iHighV){
+							pic_v.at<uchar>(i,j) = 255;
+						} 
+					}
+				}
+
+				imshow("V",pic_v);
+
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/V.jpg",pic);
+
+
+				for(int i =0 ; i<imgHSV.rows; ++i){
+					for(int j =0 ; j<imgHSV.cols; ++j){
+						if(img_S.at<uchar>(i,j) >= iLowS && img_S.at<uchar>(i,j) <= iHighS){
+							pic_s.at<uchar>(i,j) = 255;						
+						} 
+
+					}
+				}
+				imshow("S",pic_s);
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/S.jpg",pic);
+
+				***/
+
+
+
+				inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV),
+									 fisheye_thr); //Threshold the image
+
+				imshow("fisheye_thr", fisheye_thr); 
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/src.jpg",fisheye_thr);
+		
+								
+
+				cout<< "size: "<< fisheye_thr.size() << endl;
+				cout<< "channels: "<< fisheye_thr.channels() << endl;
+				
+		
 				double secs =ros::Time::now().toSec();
 				int secs1 = (int)secs;
 
 				stringstream ss;
 				ss<<secs1;
 				string s1 = ss.str();
+				cout << "s1: " << s1 << endl;
+				cout <<endl;
+				cout <<endl;
+				cout <<endl;
 
 				//畸变矫正
-				imshow("fisheye",src);
 
 				float mul = 1.0;
 
@@ -204,19 +296,23 @@ namespace laneloc
 				new_intrinsic_mat.at<float>(0, 2) = 0.5  * mul * src.cols;
 				new_intrinsic_mat.at<float>(1, 2) = 0.5  * mul * src.rows;
 
-				Mat src1;
+				Mat src1, src2;
         		//fisheye::undistortImage(src, src1, intrinsic_matrix, distortion_coeffs, new_intrinsic_mat,image_size);
 
 				fisheye::initUndistortRectifyMap(intrinsic_matrix,distortion_coeffs,R,new_intrinsic_mat,image_size,CV_32FC1,mapx,mapy);
 				//fisheye::initUndistortRectifyMap(intrinsic_matrix, distortion_coeffs, R,
 					//getOptimalNewCameraMatrix(intrinsic_matrix, distortion_coeffs, image_size, 1, image_size, 0), image_size, CV_32FC1, mapx, mapy);
 				//Mat src1 = src.clone();
-				cv::remap(src, src1, mapx, mapy, INTER_LINEAR);
+				cv::remap(fisheye_thr, src1, mapx, mapy, INTER_LINEAR);
+				cv::remap(src, src2, mapx, mapy, INTER_LINEAR);
 
 				//line(src1,Point(0,260 * mul),Point(1280  * mul, 260 * mul),Scalar(0,255,0),1,LINE_AA);
 
 				cout<< "remap size: " << src1.size() <<endl;
 				cv::imshow("remap", src1);
+
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/thr.jpg",src1);
+
 				cout << "矫正完成" << endl;
 				cout << endl;
 
@@ -232,26 +328,32 @@ namespace laneloc
 				
 				H.at<float>(0, 2) = 598.03955078125;
 				H.at<float>(1, 2) = 140.5583038330078;
-				H.at<float>(2, 2) = 12 * mul;
+				H.at<float>(2, 2) = 12 ;
 
-				Mat birdImage;
+				Mat birdImage,birdimage1;
 				Rect rect(0,260 * mul ,1280  * mul, 460  * mul);
 				Mat temp(src1, rect);
+				Mat temp1(src2,rect);
 				imshow("roi", temp);
 				cout << "temp.size(): " << temp.size() <<endl;
     			warpPerspective(temp, birdImage, H, temp.size() , WARP_INVERSE_MAP+INTER_LINEAR);
-				cv::imshow("birdImage", birdImage);
-				
+				warpPerspective(temp1, birdimage1, H, temp.size() , WARP_INVERSE_MAP+INTER_LINEAR);
 
+				cv::imshow("birdImage", birdImage);
+				cv::imshow("src2", birdimage1);
+				//resize(birdimage1, birdimage1, cv::Size(2560, 1440), (0, 0), (0, 0), cv::INTER_LINEAR);
+
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/bird.jpg",birdImage);
+				
 
 				//Rect birdImage_rect(550, 0, 180, 230);
 				//Mat birdImage_ROI(birdImage, birdImage_rect);
 				//imshow("birdeImage_ROI",birdImage_ROI);
-				cvtColor(birdImage, imgHSV, COLOR_BGR2HSV);//转为HSV
+				//cvtColor(birdImage, imgHSV, COLOR_BGR2HSV);//转为HSV
 
 
-				int width_birdimage = imgHSV.cols;
-				int height_birdimage = imgHSV.rows;
+				int width_birdimage = birdImage.cols;
+				int height_birdimage = birdImage.rows;
 
 				cout<< "width_birdimage: "<< width_birdimage << endl;
                 cout<< "height_birdimage: "<< height_birdimage << endl;
@@ -260,11 +362,7 @@ namespace laneloc
                 cout<< "channels"<<endl;
 				vector<Mat> channels;
 				cv::split(imgHSV, channels);
-
-				Mat img_H = channels.at(0);
-				Mat img_S = channels.at(1);
-				Mat img_V = channels.at(2);
-
+	
 		        ImageSeg imageseg;
 		        LineProcess lineprocess;
 
@@ -282,30 +380,38 @@ namespace laneloc
 				//Mat imgTh(720,1280,CV_8UC1,Scalar(0));
 				Mat imgTh(height_birdimage, width_birdimage,CV_8UC1,Scalar(0));
 
+				if(history_l1.size()>num_pic || history_l2.size() > num_pic){
+					if(history_l1.size()>num_pic){
+						imageseg.Process_right_image(history_l1,  mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, 
+											num_pic, imgTh, birdimage1, lines,width_birdimage, 
+											height_birdimage, birdImage, imgThresholded);
+					}
 
-				if(history_l1.size()>num_pic){
-                    imageseg.Process_right_image(history_l1,  mean_x_start1, mean_y_start1, mean_x_end1, mean_y_end1, num_pic, 
-                                                    img_S, img_V, img_H, imgTh, imgThresholded, dst, lines,
-													width_birdimage, height_birdimage);
-				}
+					if(history_l2.size() > num_pic){
+						imageseg.Process_left_image(history_l2,  mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic, 
+														imgTh, birdimage1, lines, width_birdimage, 
+														height_birdimage, birdImage, imgThresholded);
+					}
 
-				else if(history_l2.size() > num_pic){
-                    imageseg.Process_left_image(history_l2,  mean_x_start2, mean_y_start2, mean_x_end2, mean_y_end2, num_pic, 
-                                                    img_S, img_V, img_H, imgTh, imgThresholded, dst, lines,
-													width_birdimage, height_birdimage);
+
 				}
 
 				else{
-                    imageseg.initialize(imgHSV, imgThresholded, dst, imgTh, lines);
+                    imageseg.initialize( birdImage, imgThresholded, birdimage1, imgTh, lines);
 				}
-
-
+			
 				if(lines.size() > 0){
 
-                    lineprocess.Process_all_imageline(lines, imgThresholded, dst, history_theta1, history_theta2, 
-					    num_pic, pub, marker_pub, PI, history_l1, history_l2, width_birdimage, height_birdimage);
+					lineprocess.Process_all_imageline(lines, imgThresholded, birdimage1, history_theta1, history_theta2, 
+						num_pic, pub, marker_pub, PI, history_l1, history_l2, width_birdimage, height_birdimage);
 				} 
-				imshow("output_line_pic", dst);
+				
+				
+
+                cout << "imshow>>>>>>>>>>>>>>>>>" << endl;
+				imshow("output_line_pic", birdimage1);
+				//imwrite("/home/llx/geekplus/cut_video_handle/bird/dst.jpg",dst);
+
 
 		    }
 

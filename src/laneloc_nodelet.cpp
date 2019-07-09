@@ -39,12 +39,13 @@ namespace laneloc
 		LaneLoc l; 
 
 		cout << "capture the video" <<endl;
-		VideoCapture capture("/home/llx/geekplus/capture_video/build/capture_video.avi");
-		//VideoCapture capture(0);
-		//capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);//宽度
-		//capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);//高度
+		//VideoCapture capture("/home/llx/geekplus/capture_video/build/250.avi");
+		VideoCapture capture(1);
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);//宽度
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);//高度
 
 		Mat frame;
+
 
         while(1)
         {
@@ -52,12 +53,11 @@ namespace laneloc
 			capture>>frame;
 
 			if(!src1.empty()){
-        		l.laneloc(src1, pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);	
+        		//l.laneloc(src1, pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);	
 			}
 			else if(!frame.empty()){
 				l.laneloc_fisheye(frame , pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);
 			}
-
 			waitKey(10);
         }
     }
