@@ -27,7 +27,7 @@ namespace laneloc
 			int iLowS = 80;   
 			int iHighS = 255;  
 			int iLowV = 63;  
-			int iHighV = 163;  
+			int iHighV = 255;  
 
 
 			/*** 

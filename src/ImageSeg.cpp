@@ -15,6 +15,13 @@
 #include "laneloc/ImageSeg.h"
 #include "laneloc/laneloc_nodelet.h"
 
+
+
+#include <laneloc/FindCircle.h>
+
+
+
+
 using namespace std;
 using namespace cv;
 
@@ -255,9 +262,126 @@ namespace laneloc
     }
 
 
+	void ImageSeg::Detecte_Circle(Mat birdImage, ros::Publisher pub, double PI, Mat &birdimage1){
+
+		IplImage* imgAlgo = cvCreateImage(cvSize(1280, 460), IPL_DEPTH_8U, 1);
+        cout << "no problem!" <<endl;
+		IplImage temp = (IplImage)birdImage;
+		        cout << "no problem!1" <<endl;
+
+		imgAlgo = &temp;
+		        cout << "no problem!2" <<endl;
+
+		cvShowImage("imgALGO",imgAlgo);
+
+
+		int radius_min = 25 , radius_max = 29;
+		float sensitivity = 0.85;
+
+
+		struct Circles circles1;
+		struct Circles* circles = &circles1;
+		cout << "circles1->n: " << circles->n <<endl; 
+
+
+		clock_t begin = clock();
+		stImage stImageRaw;
+		stImageRaw.buffer = (unsigned char*)imgAlgo->imageData;
+		stImageRaw.cols = imgAlgo->width;
+		stImageRaw.rows = imgAlgo->height;
+
+        cout << "stImageRaw.cols: " << stImageRaw.cols <<endl;
+        cout << "stImageRaw.rows: " << stImageRaw.rows <<endl;
+        
+
+
+
+		int xm = add(1,2);
+		cout << "xm: " <<xm <<endl;
+        cout << "no problem!3" <<endl;
+
+		circles = imfindcircles_m(&stImageRaw, radius_min, radius_max, sensitivity);
+
+
+		cvtColor(birdImage, birdImage, CV_GRAY2BGR);
+
+		//publish the pose(x,y)
+		laneloc::encode message1;
+		if(circles->n == 1){
+
+			//input and draw the circles
+			double x_src = circles->circles[0].centre_x ;
+			double y_src = circles->circles[0].centre_y ;
+
+			double x_circle = x_src - 640 ;
+			double y_circle = 230 - y_src;
+			double theta_circle = atan(x_circle / y_circle) * 180 / PI;
+			double radius_circle = circles->circles[0].radius;
+
+			//input and draw the circles
+			cout << "circles->n: " << circles->n <<endl; 
+			cout<< "x_circle: " <<  x_src <<endl;
+			cout<< "y_circle: " <<  y_src <<endl;
+			cout<< "theta_circle: " <<  theta_circle <<endl;
+			cout<< "radius_circle: " <<  radius_circle <<endl;
+
+    		circle(birdImage, cv::Point(x_src, y_src),
+							 radius_circle, cv::Scalar(0,0 , 255));
+
+
+			message1.x_circle = x_circle ;
+			message1.y_circle = y_circle;
+			message1.theta_circle = theta_circle;
+
+		}
+		else if(circles->n > 1){
+
+			float max = 0;
+			int num;
+			for(int i = 0; i < circles->n; ++i){
+
+				circle(birdImage, cv::Point(circles->circles[i].centre_x, circles->circles[i].centre_y),
+						circles->circles[i].radius, cv::Scalar(0, 0, 255));
+
+				if(circles->circles[i].confidence > max){
+					max = circles->circles[i].confidence;
+					num = i;
+				}
+			}
+
+			double x_src = circles->circles[num].centre_x ;
+			double y_src = circles->circles[num].centre_y ;
+
+			double x_circle = x_src - 640 ;
+			double y_circle = 230 - y_src;
+			double theta_circle = atan(x_circle / y_circle) * 180 / PI;
+			double radius_circle = circles->circles[num].radius;
+
+			//input and draw the circles
+			cout << "circles->n: " << circles->n <<endl; 
+			cout<< "x_circle: " <<  x_src <<endl;
+			cout<< "y_circle: " <<  x_src <<endl;
+			cout<< "theta_circle: " <<  theta_circle <<endl;
+			cout<< "radius_circle: " <<  radius_circle <<endl;
+
+
+
+
+			message1.x_circle = x_circle ;
+			message1.y_circle = y_circle;
+			message1.theta_circle = theta_circle;
+
+		}
+		imshow("out_put_circle",birdImage);
+		imwrite("/home/llx/geekplus/cut_video_handle/bird/birdImage_gray.jpg",birdImage);
+
+		pub.publish(message1);
+
+	}
+
+
 
 }//namespace
-
 
 
 

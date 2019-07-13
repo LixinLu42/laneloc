@@ -22,6 +22,10 @@
 #include "laneloc/LineProcess.h"
 #include "laneloc/ImageSeg.h"
 
+extern "C" 
+{
+	#include <laneloc/FindCircle.h>
+};
 
 using namespace std;
 using namespace cv;
@@ -39,10 +43,10 @@ namespace laneloc
 		LaneLoc l; 
 
 		cout << "capture the video" <<endl;
-		//VideoCapture capture("/home/llx/geekplus/capture_video/build/250.avi");
-		VideoCapture capture(1);
-		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);//宽度
-		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);//高度
+		VideoCapture capture("/home/llx/geekplus/capture_video/build/circle.avi");
+		//VideoCapture capture(0);
+		//capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);//宽度
+		//capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);//高度
 
 		Mat frame;
 

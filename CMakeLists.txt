@@ -174,6 +174,7 @@ src/ImageSeg.cpp
 src/LineProcess.cpp
 src/LaneLoc.cpp
 src/RvizMarker.cpp
+src/FindCircle.c
 )
 
 add_dependencies(${PROJECT_NAME} 
