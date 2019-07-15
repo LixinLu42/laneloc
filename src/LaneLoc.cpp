@@ -12,6 +12,7 @@
 
 #include "laneloc/encode.h"
 #include "laneloc/LaneLoc.h"
+#include "laneloc/CircleProcess.h"
 
 
 using namespace std;
@@ -144,7 +145,7 @@ namespace laneloc
 	***/
 
 	void LaneLoc::laneloc_fisheye(Mat src, ros::Publisher pub, ros::Publisher marker_pub, list<vector<double> > &history_l1, 
-			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2){
+			list<vector<double> > &history_l2, list<double> &history_theta1, list<double> &history_theta2, list<Vec3f> &history_c1){
 
 			double PI = 3.1415926535;
 			Mat gray_src, dst,imgHSV, pic, imgThresholded, fisheye_thr;
@@ -161,6 +162,7 @@ namespace laneloc
 				cvtColor(src, imgHSV, COLOR_BGR2HSV);//转为HSV
 
 				/***
+				//调试hsv图片
 				cvtColor(src, pic, COLOR_BGR2GRAY);//转为GRAY
 
 				threshold(pic, pic, 255, 255, CV_THRESH_BINARY);
@@ -291,8 +293,8 @@ namespace laneloc
 
 				intrinsic_mat.copyTo(new_intrinsic_mat);
 				//调节视场大小,乘的系数越小视场越大
-				new_intrinsic_mat.at<float>(0, 0) *= 0.35 * mul;
-				new_intrinsic_mat.at<float>(1, 1) *= 0.35 * mul;
+				new_intrinsic_mat.at<float>(0, 0) *= 0.8 * mul;
+				new_intrinsic_mat.at<float>(1, 1) *= 0.8 * mul;
 				//调节校正图中心，建议置于校正图中心
 				new_intrinsic_mat.at<float>(0, 2) = 0.5  * mul * src.cols;
 				new_intrinsic_mat.at<float>(1, 2) = 0.5  * mul * src.rows;
@@ -319,6 +321,7 @@ namespace laneloc
 
 				cout << "--------------转为IPM鸟瞰图-----------------" << endl;
 				cv::Mat H(3, 3, cv::DataType<float>::type); // Intrisic matrix
+				/***
 				H.at<float>(0, 0) = 10.88987867674842;
 				H.at<float>(1, 0) = -0.2676121544751742;
 				H.at<float>(2, 0) = -0.0002788852115358155;
@@ -330,9 +333,25 @@ namespace laneloc
 				H.at<float>(0, 2) = 598.03955078125;
 				H.at<float>(1, 2) = 140.5583038330078;
 				H.at<float>(2, 2) = 12 ;
+				***/
+
+
+
+				H.at<float>(0, 0) = 24.48823083026838;
+				H.at<float>(1, 0) = -0.5412420205443425;
+				H.at<float>(2, 0) = -0.0001223212566417543;
+				
+				H.at<float>(0, 1) = -34.95068964872168;
+				H.at<float>(1, 1) = 4.96647184676344;
+				H.at<float>(2, 1) = -0.05441575608838902;
+				
+				H.at<float>(0, 2) = 548.7914428710938;
+				H.at<float>(1, 2) = 252.5103759765625;
+				H.at<float>(2, 2) = 25.5 ;
+
 
 				Mat birdImage,birdimage1;
-				Rect rect(0,260 * mul ,1280  * mul, 460  * mul);
+				Rect rect(0,200 * mul ,1280  * mul, 460  * mul);
 				Mat temp(src1, rect);
 				Mat temp1(src2,rect);
 				imshow("roi", temp);
@@ -361,6 +380,7 @@ namespace laneloc
 	
 		        ImageSeg imageseg;
 		        LineProcess lineprocess;
+				Circle circleprocess;
 
                 cout<< "lines"<<endl;
 				vector<Vec4f> lines;
@@ -403,11 +423,20 @@ namespace laneloc
 					lineprocess.Process_all_imageline(lines, imgThresholded, birdimage1, history_theta1, history_theta2, 
 						num_pic, pub, marker_pub, PI, history_l1, history_l2, width_birdimage, height_birdimage);
 				} 
+				imshow("output_line", birdimage1);
 
 
 
+				//圆检测
+				circleprocess.Cirle_Process(history_c1, birdImage, birdimage1);
+				cout << ">>>>>>>>>>>>>>>>>>>>>>>>imshow_line&&circle>>>>>>>>>>>>>>>>>" << endl;
+				imshow("output_lineAndCircle", birdimage1);
 
 
+				
+
+				/***
+				//与直线检测的图分开使用，单独畸变矫正、逆透视变换进行圆检测
 				Mat intrinsic_mat1(intrinsic_matrix), new_intrinsic_mat1;
 
 				intrinsic_mat1.copyTo(new_intrinsic_mat1);
@@ -456,55 +485,17 @@ namespace laneloc
 				warpPerspective(temp3, birdImage_thr, H_1, temp2.size() , WARP_INVERSE_MAP+INTER_LINEAR);
 
 				//threshold( birdImage2 , birdImage3, 1, 255, CV_THRESH_BINARY );
-
+				
 				cv::imshow("birdImage2", birdImage2);
     			medianBlur(birdImage2, birdImage2,3);
 				medianBlur(birdImage_thr, birdImage_thr,3);
 				cv::imshow("birdImage2_medianBlur", birdImage2);
-				//threshold( birdImage , birdImage, 1, 255, CV_THRESH_BINARY );
-
-
-				cv::imshow("birdImage2_THR", birdImage_thr);
-
-
-				vector<Vec3f> circles1, circles2; 
-				//HoughCircles(birdImage2,circles,CV_HOUGH_GRADIENT,1,15,50,30,24,30); 
-				HoughCircles(birdImage_thr,circles1,CV_HOUGH_GRADIENT,1, 12, 255, 10, 17, 20); 
-				HoughCircles(birdImage_thr,circles2,CV_HOUGH_GRADIENT,1, 12, 255, 10, 25, 29); 
-
-
-
-				cvtColor(birdImage2 , birdImage2, CV_GRAY2BGR);
-				cout<< "circles.size()： " << circles1.size() << endl;
-				cout<< "circles.size()： " << circles2.size() << endl;
-
-				for(size_t i = 0; i < circles1.size(); i++) { 
-					Vec3f c = circles1[i];
-					circle(birdImage2, Point(c[0], c[1]), c[2], Scalar(0,255,255), 1, CV_AA);
-				}
-				for(size_t i = 0; i < circles2.size(); i++) { 
-					Vec3f c = circles2[i];
-					circle(birdImage2, Point(c[0], c[1]), c[2], Scalar(0,255,255), 1, CV_AA);
-				}
-
-
-
-				/***
-				Mat circle_resize, circle_pyrup1, circle_pyrup2;
-				resize(temp2, circle_resize, Size(temp2.cols * 4, temp2.rows * 4), (0,0), (0,0));
-				imshow("circle_size",circle_resize);
-				pyrUp(temp2, circle_pyrup1,Size(temp2.cols * 2, temp2.rows * 2));
-				pyrUp(circle_pyrup1, circle_pyrup2,Size(temp2.cols * 4, temp2.rows * 4));
-
-				imshow("circle_pyrup",circle_pyrup2);
-				***/
-
-				//imageseg.Detecte_Circle(birdImage2, pub, PI, birdimage1);
+				threshold( birdImage_thr , birdImage_thr, 100, 255, CV_THRESH_BINARY );
 				
 
-                cout << "imshow>>>>>>>>>>>>>>>>>" << endl;
-				imshow("output_line_pic", birdImage_thr);
-				imshow("output_line_pic1", birdImage2);
+				cv::imshow("birdImage2_THR", birdImage_thr);
+				***/
+
 
 
 		    }

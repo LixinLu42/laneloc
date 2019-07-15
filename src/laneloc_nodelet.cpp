@@ -39,6 +39,8 @@ namespace laneloc
 		list<vector<double> > history_l2;
 		list<double> history_theta1;
 		list<double> history_theta2;
+		list<Vec3f> history_c1;
+
 
 		LaneLoc l; 
 
@@ -60,7 +62,8 @@ namespace laneloc
         		//l.laneloc(src1, pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);	
 			}
 			else if(!frame.empty()){
-				l.laneloc_fisheye(frame , pub, marker_pub, history_l1, history_l2, history_theta1, history_theta2);
+				l.laneloc_fisheye(frame , pub, marker_pub, history_l1, history_l2, history_theta1, 
+								history_theta2, history_c1);
 			}
 			waitKey(10);
         }

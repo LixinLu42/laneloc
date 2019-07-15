@@ -11,6 +11,7 @@ namespace laneloc
         public:
             double get_XZ(double h, double theta, double y, double f, double PI);
 			double get_P_to_L(double x, double y, double x_start, double z_start, double K);
+			float get_P_to_P(float x, float y, float x1, float y1);
     		double get_K(double mean_x_start, double mean_y_start, double mean_x_end, double mean_y_end);
 
 

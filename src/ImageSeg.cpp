@@ -28,9 +28,7 @@ using namespace cv;
 namespace laneloc
 {
 
-    LineProcess lineprocess;
-
-	
+    LineProcess lineprocess;	
 
 
 	Mat ImageSeg::get_edge(Mat imgThresholded, Mat pic, bool if_left){
@@ -262,6 +260,9 @@ namespace laneloc
     }
 
 
+
+	/***
+	//调用迎春的程序
 	void ImageSeg::Detecte_Circle(Mat birdImage, ros::Publisher pub, double PI, Mat &birdimage1){
 
 		IplImage* imgAlgo = cvCreateImage(cvSize(1280, 460), IPL_DEPTH_8U, 1);
@@ -378,6 +379,7 @@ namespace laneloc
 		pub.publish(message1);
 
 	}
+	***/
 
 
 

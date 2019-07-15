@@ -1,4 +1,3 @@
-// this should really be in the implementation (.cpp file)
 #include <iostream>	
 #include <ros/ros.h>  
 #include <image_transport/image_transport.h>  
@@ -49,6 +48,14 @@ namespace laneloc
     double LineProcess::get_P_to_L(double x, double y, double x_start, double z_start, double K){
 		double  n = pow(K, 2) + 1;
 		return (fabs(y - K * (x - x_start) - z_start) / pow(n,0.5));
+  	}
+
+
+    float LineProcess::get_P_to_P(float x, float y, float x1, float y1){
+		float  n1 = pow((x-x1), 2);
+		float  n2 = pow((y-y1), 2);
+
+		return fabs(pow(n1 + n2,0.5));
   	}
 
     
@@ -173,11 +180,16 @@ namespace laneloc
 		cout<< "Confidence:" << line_ifo[best_line][7] << endl;
 		cout<< "max_size()" << line_ifo.max_size() <<endl;
 		
-		line(dst,Point(point_start_x,point_start_y),Point(point_end_x, point_end_y),Scalar(255,0,0),1,LINE_AA);
+		line(dst,Point(point_start_x,point_start_y),Point(point_end_x, point_end_y),Scalar(0,255,255),1,LINE_AA);
 
+
+		//左上角斜线
 		line(dst,Point(0,0),Point(100,100),Scalar(255,0,0),1,LINE_AA);
-		line(dst,Point(0,0),Point(0,100), Scalar(255,0,0),1,LINE_AA);
-		line(dst,Point(640,0),Point(640,230),Scalar(0,0,255),1,LINE_AA);
+
+		//斜边与中心线
+		line(dst,Point(640,0),Point(640,460),Scalar(0,0,255),1,LINE_AA);
+		line(dst,Point(0,0),Point(640,460),Scalar(0,0,255),1,LINE_AA);
+		line(dst,Point(640,460),Point(1280,0),Scalar(0,0,255),1,LINE_AA);
 
 
 		double K;
@@ -188,7 +200,7 @@ namespace laneloc
 			K = 1.0 / K;			
 			cout << "1/K: " << K <<endl;
 
-			result[1] = 14.0 * get_P_to_L(230, width_birdimage/2, point_start_y, point_start_x, K);
+			result[1] = 3.4139 * get_P_to_L(230, width_birdimage/2, point_start_y, point_start_x, K);
 			//result[1] = 14.0 * get_P_to_L(width_birdimage/2, height_birdimage, point_start_x, point_start_y, K);
 
 		}
@@ -197,7 +209,7 @@ namespace laneloc
 			cout << "K: " << K <<endl;
 
 			result[0] = 0.0;
-			result[1] = 14.0 * fabs(point_end_x - width_birdimage/2);
+			result[1] = 3.4139 * fabs(point_end_x - width_birdimage/2);
 		}
 
 		if(point_end_x  >= width_birdimage/2 && point_start_x  >= width_birdimage/2 ){
